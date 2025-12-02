@@ -2,151 +2,175 @@
 
 import { useState } from "react";
 
+type FormState = {
+  title: string;
+  producerName: string;
+  bpm: string;
+  key: string;
+  price: string;
+  moodTags: string;
+  audioUrl: string;
+};
+
+const emptyForm: FormState = {
+  title: "",
+  producerName: "",
+  bpm: "",
+  key: "",
+  price: "",
+  moodTags: "",
+  audioUrl: "",
+};
+
 export default function UploadBeatPage() {
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage("");
 
-    const formData = new FormData(e.currentTarget);
+    try {
+      const res = await fetch("/api/beats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          bpm: form.bpm ? Number(form.bpm) : 0,
+          price: form.price === "" ? null : Number(form.price),
+        }),
+      });
 
-    const res = await fetch("/api/beats", {
-      method: "POST",
-      body: formData,
-    });
+      const data = await res.json();
 
-    const data = await res.json();
-
-    if (res.ok) {
-      setMessage("上传成功 ✅");
-      e.currentTarget.reset();
-    } else {
-      setMessage(`上传失败：${data.error || "Unknown error"}`);
+      if (res.ok) {
+        setMessage("上传成功 ✅");
+        setForm(emptyForm);
+      } else {
+        setMessage(`上传失败：${data.message || "服务器错误"}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("上传失败：网络错误");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
-  }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <section className="hero-animated rounded-3xl glass-panel border border-white/10 px-6 py-8 sm:px-10 sm:py-10">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-          Upload a beat to the vault
+        <p className="text-xs uppercase tracking-[0.25em] text-slate-200/70 mb-3">
+          Upload a beat
+        </p>
+        <h1 className="text-3xl sm:text-4xl font-semibold mb-2">
+          Drop a new beat into the vault
         </h1>
-        <p className="text-sm text-slate-200/80 max-w-xl">
-          Anyone with this page can upload. Please enter your{" "}
-          <span className="font-semibold">producer name</span> so listeners know
-          who made the track.
+        <p className="text-sm text-slate-200/80 max-w-2xl">
+          Submit metadata with a public audio URL. Separate mood tags with commas; leave price blank for free.
         </p>
       </section>
 
       <section className="glass-panel rounded-3xl border border-white/10 p-6 sm:p-8">
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-          encType="multipart/form-data"
-        >
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-                Beat Title
-              </label>
+            <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+              <span>Beat Title</span>
               <input
-                name="title"
                 className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
               />
-            </div>
+            </label>
 
-            <div>
-              <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-                Producer Name
-              </label>
+            <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+              <span>Producer Name</span>
               <input
-                name="producerName"
-                placeholder="k / Lunchbox / your artist name"
                 className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+                value={form.producerName}
+                onChange={(e) =>
+                  setForm({ ...form, producerName: e.target.value })
+                }
                 required
               />
-            </div>
+            </label>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-                BPM
-              </label>
+            <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+              <span>BPM</span>
               <input
-                name="bpm"
                 type="number"
                 className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+                value={form.bpm}
+                onChange={(e) => setForm({ ...form, bpm: e.target.value })}
+                required
               />
-            </div>
-            <div>
-              <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-                Key
-              </label>
+            </label>
+
+            <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+              <span>Key</span>
               <input
-                name="key"
-                placeholder="F# minor"
                 className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+                value={form.key}
+                onChange={(e) => setForm({ ...form, key: e.target.value })}
+                required
               />
-            </div>
-            <div>
-              <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-                Price (optional)
-              </label>
+            </label>
+
+            <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+              <span>Price (optional)</span>
               <input
-                name="price"
                 type="number"
                 className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                placeholder="Leave blank for free"
               />
-            </div>
+            </label>
           </div>
 
-          <div>
-            <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-              Mood Tags
-            </label>
+          <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+            <span>Mood Tags</span>
             <input
-              name="moodTags"
-              placeholder="sad, drill, late night"
               className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+              value={form.moodTags}
+              onChange={(e) => setForm({ ...form, moodTags: e.target.value })}
+              placeholder="sad, drill, late night"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-400">
               Separate tags with commas.
             </p>
-          </div>
+          </label>
 
-          <div>
-            <label className="block mb-1 text-xs uppercase tracking-[0.18em] text-slate-300/80">
-              Audio File
-            </label>
+          <label className="block text-xs uppercase tracking-[0.18em] text-slate-300/80 space-y-1">
+            <span>Audio URL (mp3)</span>
             <input
-              name="audioFile"
-              type="file"
-              accept="audio/*"
-              className="w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-full file:border-0 file:bg-white/10 file:text-slate-100 hover:file:bg-white/20"
+              className="w-full border border-white/15 bg-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-300/60"
+              value={form.audioUrl}
+              onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
+              placeholder="https://.../your-beat.mp3"
               required
             />
+          </label>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white/90 text-slate-900 text-xs font-semibold tracking-wide hover:bg-white transition disabled:opacity-60"
+            >
+              {isSubmitting ? "Uploading..." : "Upload Beat"}
+            </button>
+            {message && (
+              <p className="text-xs text-slate-200 whitespace-pre-line">
+                {message}
+              </p>
+            )}
           </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white/90 text-slate-900 text-xs font-semibold tracking-wide hover:bg白 transition disabled:opacity-60"
-          >
-            {isSubmitting ? "Uploading..." : "Upload Beat"}
-          </button>
-
-          {message && (
-            <p className="text-xs text-slate-200 mt-2">
-              {message}
-            </p>
-          )}
         </form>
       </section>
     </div>

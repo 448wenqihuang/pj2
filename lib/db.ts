@@ -1,16 +1,34 @@
 // lib/db.ts
 import mongoose from "mongoose";
 
-export async function connectDB() {
-  // 已经连上就不用再连
-  if (mongoose.connection.readyState >= 1) return;
+const MONGODB_URI = process.env.MONGODB_URI!;
 
-  // 调试：看看环境变量到底是什么
-  console.log(">>> MONGODB_URI in env =", process.env.MONGODB_URI);
+if (!MONGODB_URI) {
+  throw new Error("MONGODB_URI is not set in environment variables");
+}
 
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI not set");
+interface Cached {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+// @ts-ignore
+let cached: Cached = global.mongoose;
+
+if (!cached) {
+  // @ts-ignore
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+export async function connectToDatabase() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    });
   }
 
-  await mongoose.connect(process.env.MONGODB_URI);
+  cached.conn = await cached.promise;
+  return cached.conn;
 }

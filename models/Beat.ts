@@ -1,17 +1,17 @@
-import mongoose, { Schema, models, model } from "mongoose";
+// models/Beat.ts
+import { Schema, model, models } from "mongoose";
 
 const BeatSchema = new Schema(
   {
     title: { type: String, required: true },
     producerName: { type: String, required: true },
-    bpm: Number,
-    key: String,
-    moodTags: [String],
-    price: Number,
-    audioUrl: { type: String, required: true },
-    isPublished: { type: Boolean, default: true },
+    bpm: { type: Number, required: true },
+    key: { type: String, required: true },
+    price: { type: Number },
+    moodTags: [{ type: String }],
+    audioUrl: { type: String, required: true }, // ⚠️ 用 URL，不存文件
   },
   { timestamps: true }
 );
 
-export default models.Beat || model("Beat", BeatSchema);
+export const Beat = models.Beat || model("Beat", BeatSchema);
