@@ -1,11 +1,7 @@
 // lib/db.ts
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI is not set in environment variables");
-}
+const MONGODB_URI = process.env.MONGODB_URI || "";
 
 interface Cached {
   conn: typeof mongoose | null;
@@ -21,6 +17,12 @@ if (!cached) {
 }
 
 export async function connectToDatabase() {
+  if (!MONGODB_URI || MONGODB_URI.includes("<db_password>")) {
+    throw new Error(
+      "MONGODB_URI is missing or still contains the <db_password> placeholder"
+    );
+  }
+
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {

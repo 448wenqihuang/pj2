@@ -9,7 +9,7 @@ const BeatSchema = new Schema(
     key: { type: String, required: true },
     price: { type: Number },
     moodTags: [{ type: String }],
-    audioUrl: { type: String, required: true }, // ⚠️ 用 URL，不存文件
+    audioUrl: { type: String, required: true }, // store audio URL only
   },
   { timestamps: true }
 );

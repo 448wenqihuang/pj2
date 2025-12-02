@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { connectDB as connectToDatabase } from "@/lib/db";
-import Beat from "@/models/Beat";
+import { connectToDatabase } from "@/lib/db";
+import { Beat } from "@/models/Beat";
 
 const serializeBeat = (beat: any) => {
   if (!beat) return beat;
